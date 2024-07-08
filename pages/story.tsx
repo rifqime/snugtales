@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import styles from '../styles/Story.module.css';
+import { supabase } from '../lib/supabaseClient';
 
 interface StoryPage {
   page_number: number;
@@ -22,49 +24,83 @@ export default function StoryPage() {
   const router = useRouter();
   const { id } = router.query;
   const [story, setStory] = useState<GeneratedStory | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState('');
 
   useEffect(() => {
-    if (id) {
-      console.log(`Fetching story with ID: ${id}`);
-      fetch(`/api/generate-story?id=${id}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            console.error(`Error: ${data.error}`);
-            router.push('/create-story');
-          } else {
-            console.log('Story data fetched successfully:', data);
-            setStory(data);
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching story:', error);
-          router.push('/create-story');
-        });
-    } else {
-      console.log('No ID found in URL, attempting to load from local storage');
-      const savedStory = localStorage.getItem('lastGeneratedStory');
-      if (savedStory) {
-        const parsedStory = JSON.parse(savedStory);
-        setStory(parsedStory);
-        console.log(`Loaded story from local storage with ID: ${parsedStory.id}`);
-        // Update URL with story ID
-        router.push(`/story?id=${parsedStory.id}`, undefined, { shallow: true });
-      } else {
-        console.log('No story found in local storage, redirecting to create story page');
-        router.push('/create-story');
+    async function fetchStory(storyId: string) {
+      try {
+        setIsLoading(true);
+        setError(null);
+        console.log(`Fetching story with ID: ${storyId}`);
+
+        const { data, error } = await supabase
+          .from('stories')
+          .select('*')
+          .eq('id', storyId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          console.log('Story data fetched successfully:', data);
+          setStory(data as GeneratedStory);
+        } else {
+          throw new Error('Story not found');
+        }
+      } catch (err) {
+        console.error('Error fetching story:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setIsLoading(false);
       }
     }
-  }, [id, router]);
+
+    if (id && typeof id === 'string') {
+      fetchStory(id);
+    } else {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  const copyToClipboard = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopySuccess('URL copied!');
+      setTimeout(() => setCopySuccess(''), 2000); // Clear the message after 2 seconds
+    }, (err) => {
+      console.error('Could not copy text: ', err);
+      setCopySuccess('Failed to copy');
+    });
+  };
+
+  if (isLoading) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className={styles.error}>
+        Error: {error}
+        <Link href="/create-story">Create a new story</Link>
+      </div>
+    );
+  }
 
   if (!story) {
-    return <div className={styles.loading}>Loading...</div>;
+    return (
+      <div className={styles.error}>
+        No story found. 
+        <Link href="/create-story">Create a new story</Link>
+      </div>
+    );
   }
 
   return (
     <div className={styles.storyContainer}>
       <h1 className={styles.storyTitle}>{story.title}</h1>
-      <div className={`${styles.storySummary} ${styles.storySummarySpacing}`}>
+      <div className={styles.storySummary}>
         <div className={styles.summaryContent}>
           <h2>Story Summary</h2>
           <p>{story.summary}</p>
@@ -81,7 +117,15 @@ export default function StoryPage() {
       {story.story.map((page, index) => (
         <div key={index} className={styles.storyPage}>
           <h2 className={styles.pageNumber}>Page {page.page_number}</h2>
-          {page.image_url && <img src={page.image_url} alt={`Illustration for page ${page.page_number}`} className={styles.storyImage} />}
+          {page.image_url && (
+            <div className={styles.imageContainer}>
+              <img 
+                src={page.image_url} 
+                alt={`Illustration for page ${page.page_number}`} 
+                className={styles.storyImage}
+              />
+            </div>
+          )}
           <p className={styles.storyText}>{page.story_text}</p>
           {page.parent_interaction && (
             <div className={styles.parentInteraction}>
@@ -91,7 +135,15 @@ export default function StoryPage() {
           )}
         </div>
       ))}
-      <button onClick={() => router.push('/create-story')} className={styles.newStoryButton}>Create Another Story</button>
+      <div className={styles.buttonContainer}>
+        <button onClick={copyToClipboard} className={styles.copyUrlButton}>
+          Copy Story URL
+        </button>
+        {copySuccess && <span className={styles.copySuccess}>{copySuccess}</span>}
+        <button onClick={() => router.push('/create-story')} className={styles.newStoryButton}>
+          Create Another Story
+        </button>
+      </div>
     </div>
   );
 }

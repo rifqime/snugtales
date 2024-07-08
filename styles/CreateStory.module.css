@@ -18,6 +18,16 @@
   gap: 15px;
 }
 
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
 .input,
 .textarea {
   width: 100%;
@@ -51,6 +61,19 @@
   color: #ff0000;
   text-align: center;
   margin-bottom: 15px;
+}
+
+.helperText {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+.disclaimer {
+  font-size: 0.75rem;
+  color: #888;
+  text-align: center;
+  margin-top: 10px;
 }
 
 .loading {

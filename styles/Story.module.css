@@ -1,126 +1,178 @@
 .storyContainer {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+  padding: 40px 20px;
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
 }
 
 .storyTitle {
-  font-size: 28px;
-  color: #333;
+  font-size: 32px;
+  color: #2c3e50;
   text-align: center;
-  margin-bottom: 30px;
-}
-
-.storyPage {
   margin-bottom: 40px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
 }
 
-.pageNumber {
+.storySummary {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin-bottom: 40px;
+}
+
+.summaryContent h2 {
+  color: #2c3e50;
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.summaryContent p {
+  font-size: 16px;
+  text-align: justify;
+}
+
+.valuesExplored {
+  margin-top: 30px;
+  background-color: #e8f4fd;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.valuesExplored h3 {
+  color: #2980b9;
   font-size: 20px;
-  color: #4a4a4a;
   margin-bottom: 15px;
 }
 
-.storyImage {
-  max-width: 100%;
-  height: auto;
+.valuesExplored ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.valuesExplored li {
+  margin-bottom: 10px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.valuesExplored li::before {
+  content: "•";
+  color: #3498db;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.storyPage {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+.pageNumber {
+  background-color: #3498db;
+  color: #fff;
+  font-size: 18px;
+  padding: 10px 20px;
+  margin: 0;
+}
+
+.imageContainer {
+  width: 100%;
+  padding-top: 100%; /* This creates a 1:1 aspect ratio */
+  position: relative;
+  overflow: hidden;
   margin-bottom: 20px;
-  border-radius: 5px;
+}
+
+.storyImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* This will maintain the aspect ratio and cover the container */
 }
 
 .storyText {
   font-size: 16px;
-  line-height: 1.6;
-  color: #333;
+  padding: 20px;
+  text-align: justify;
 }
 
 .parentInteraction {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #e6f7ff;
-  border-radius: 5px;
+  background-color: #e8f4fd;
+  border-top: 2px solid #3498db;
+  padding: 20px;
   font-style: italic;
 }
 
-.storySummary {
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.storySummarySpacing {
-  margin-bottom: 40px;
-}
-
-.summaryContent {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.storySummary h2 {
-  color: #4a4a4a;
+.parentInteraction h3 {
+  color: #2980b9;
+  font-size: 18px;
   margin-bottom: 10px;
-  font-size: 24px;
-  text-align: center;
 }
 
-.storySummary p {
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.copyUrlButton, .newStoryButton {
+  padding: 12px 24px;
   font-size: 16px;
-  line-height: 1.6;
-  color: #333;
-  text-align: center;
-}
-
-.valuesExplored {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #e6f7ff;
+  cursor: pointer;
+  border: none;
   border-radius: 5px;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
-.valuesExplored h3 {
-  color: #4a4a4a;
-  margin-bottom: 10px;
-  font-size: 20px;
+.copyUrlButton {
+  background-color: #3498db;
+  color: white;
 }
 
-.valuesExplored ul {
-  list-style-type: disc;
-  padding-left: 20px;
-}
-
-.valuesExplored li {
-  margin-bottom: 5px;
+.copyUrlButton:hover {
+  background-color: #2980b9;
 }
 
 .newStoryButton {
-  display: block;
-  width: 250px;
-  margin: 40px auto 0;
-  padding: 15px;
-  background-color: #4CAF50;
+  background-color: #2ecc71;
   color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 18px;
-  text-align: center;
-  transition: background-color 0.3s ease;
 }
 
 .newStoryButton:hover {
-  background-color: #45a049;
+  background-color: #27ae60;
+}
+
+.copySuccess {
+  color: #2ecc71;
+  margin-left: 10px;
+  font-weight: bold;
 }
 
 .loading {
   text-align: center;
-  font-size: 20px;
-  color: #666;
-  margin-top: 50px;
+  font-size: 24px;
+  color: #3498db;
+  margin-top: 100px;
+}
+
+.error {
+  text-align: center;
+  font-size: 18px;
+  color: #e74c3c;
+  margin-top: 100px;
 }

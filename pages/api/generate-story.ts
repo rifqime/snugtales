@@ -1,16 +1,29 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Anthropic from '@anthropic-ai/sdk';
-import Replicate from 'replicate';
+import * as fal from "@fal-ai/serverless-client";
 import { supabase } from '../../lib/supabaseClient';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+
+// Ensure FAL_KEY is set
+if (!process.env.FAL_KEY) {
+  throw new Error("FAL_KEY is not set in environment variables");
+}
+
+fal.config({
+  credentials: process.env.FAL_KEY
+});
+
+// Add this type definition
+type FalResult = {
+  images?: Array<{ url: string }>;
+};
 
 interface StoryPage {
   page_number: number;
   story_text: string;
   image_prompt: string;
-  parent_interaction: string | null;
+  parent_interaction?: string;
   image_url?: string;
 }
 
@@ -34,7 +47,7 @@ async function saveImageToStorage(imageUrl: string, fileName: string): Promise<s
     const { data, error } = await supabase.storage
       .from('story-images')
       .upload(fileName, buffer, {
-        contentType: 'image/webp',
+        contentType: 'image/png',
         upsert: true
       });
 
@@ -55,51 +68,54 @@ async function saveImageToStorage(imageUrl: string, fileName: string): Promise<s
   }
 }
 
-async function generateStoryContent(childName: string, childAge: string, parentName: string, parentValue: string, favoriteAnimal: string): Promise<StoryData> {
-  const systemPrompt = `You are an AI-powered bedtime story creator for children aged 2-6. Create engaging, educational stories that instill values and ideas chosen by parents aligning with Muslim values, while being entertaining and age-appropriate. Guidelines:
-    1. Generate a complete 8-10 page bedtime story with text, image prompt, and optional parent interaction per page.
-    2. Tailor content to the child's age.
-    3. Integrate the parent's chosen value naturally.
-    4. Use engagement techniques like repetition, rhymes, and mild suspense.
-    5. Ensure cultural sensitivity and global appeal.
-    6. Maintain consistent image style across illustrations.
-    7. Use parables or animals as main characters by default.
-    8. Only use child's name as character if requested; don't render child's image unless specified.
-    9. Keep visual design consistent for main characters across all panels.`;
+async function generateStoryContent(childName: string, childAge: string, storyTheme: string, parentValue: string): Promise<StoryData> {
+  const systemPrompt = `You are an AI-powered bedtime story creator for children aged 2-6. Create engaging, educational stories that instill values and ideas chosen by parents, while being entertaining and age-appropriate. Guidelines:
+  1. Generate a complete 8-10 page bedtime story with text and image prompt for each page.
+  2. Based on the input provided, decide whether to use the child as a character or create a story with fictional characters that align with the given theme.
+  3. Tailor the content to the child's age and incorporate the parent's chosen values and story details naturally.
+  4. Use engagement techniques like repetition, rhymes, and mild suspense.
+  5. Ensure cultural sensitivity and global appeal.
+  6. Maintain consistent character appearances and style across all pages.
+  7. Create vivid, colorful imagery suitable for young children.
+  8. For each image prompt, provide a detailed and consistent description of main characters, including their appearance, clothing, and any distinguishing features.
+  9. Ensure each image prompt can stand alone without relying on context from other images.`;
 
-  const userMessage = `Create a bedtime story with:
-    - Child's name: ${childName}
-    - Child's age: ${childAge}
-    - Parent's name: ${parentName || 'Not provided'}
-    - Value to share: ${parentValue}
-    - Favorite animal: ${favoriteAnimal || 'Not provided'}
+  const userMessage = `Create a bedtime story based on the following information:
+  - Child's name: ${childName}
+  - Child's age: ${childAge}
+  - Story theme: ${storyTheme}
+  - Story details and values: ${parentValue}
 
-    Image Prompt Template:
-    "Simple, flat color children's book illustration. [Main character description] is [action]. Background: [setting]. Style: soft watercolor, delicate lines, warm muted tones. Characters have expressive eyes and rounded features. Include a small ${favoriteAnimal} if relevant. Use pastel palette. Round, chubby appearance for all elements. Culturally sensitive, appealing to young children."
+  For each page, provide:
+  1. Story text
+  2. An image prompt using this template:"Cute, simple children's illustration. [Character name], a [age]-year-old [boy/girl] with a round face, simple dot eyes, and a small smile. [He/She] has [hair description] and is wearing [clothing description]. [Action or situation]. Background: Simple, uncluttered [setting] with soft pastel colors. Style: Gentle watercolor effect with clean, simple outlines. Use a limited, pastel color palette. Characters should have rounded, cute features similar to child-friendly disney pixar character. Minimal details, focus on basic shapes. Include: [Any other important elements or secondary characters]. Soft, comforting, and appealing for children."
+  3. An optional parent interaction suggestion (only where it adds value to the story experience)
 
-    Format response as JSON:
-    {
-      "title": "Story title",
-      "story": [
-        {
-          "page_number": int,
-          "story_text": "Story text for this page",
-          "image_prompt": "Image prompt using the template",
-          "parent_interaction": "Parent-child interaction suggestion or null"
-        }
-      ],
-      "summary": "Brief story summary",
-      "values_explored": ["Key values in the story"]
-    }
+  Ensure that the description of main characters remains consistent across all image prompts, and each prompt contains enough information to generate a coherent image without relying on other prompts.
 
-    Ensure JSON is properly formatted and maintain character consistency across image prompts.`;
+  Format the response as JSON:
+  {
+    "title": "Story title",
+    "story": [
+      {
+        "page_number": int,
+        "story_text": "Story text for this page",
+        "image_prompt": "Image prompt using the template",
+        "parent_interaction": "Parent-child interaction suggestion or null"
+      }
+    ],
+    "summary": "Brief story summary",
+    "values_explored": ["Key values in the story"]
+  }
+
+  Ensure proper JSON formatting and maintain character consistency across all pages. Incorporate the story theme and parent's values throughout the narrative.`;
 
   console.log('Sending prompt to Anthropic');
 
   try {
     const storyResponse = await anthropic.messages.create({
       model: 'claude-3-sonnet-20240229',
-      max_tokens: 3500,
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -126,19 +142,24 @@ async function generateAndSaveImages(story: StoryPage[]): Promise<StoryPage[]> {
   const imagePromises = story.map(async (page, index) => {
     try {
       console.log(`Generating image for page ${index + 1}`);
-      const output = await replicate.run(
-        "fofr/sd3-explorer:a9f4aebd943ad7db13de8e34debea359d5578d08f128e968f9a36c3e9b0148d4", 
-        { input: { prompt: page.image_prompt, guidance_scale: 4.5 } }
-      );
+      const result = await fal.subscribe("fal-ai/aura-flow", {
+        input: {
+          prompt: page.image_prompt,
+          num_images: 1,
+          guidance_scale: 3.5,
+          num_inference_steps: 25
+        },
+      }) as FalResult;
 
-      if (Array.isArray(output) && output.length > 0 && typeof output[0] === 'string') {
-        const fileName = `story_${Date.now()}_page_${index + 1}.webp`;
+      if (result.images && result.images.length > 0) {
+        const imageUrl = result.images[0].url;
+        const fileName = `story_${Date.now()}_page_${index + 1}.png`;
         console.log(`Saving image for page ${index + 1}`);
-        const persistentUrl = await saveImageToStorage(output[0], fileName);
+        const persistentUrl = await saveImageToStorage(imageUrl, fileName);
         console.log(`Image saved for page ${index + 1}: ${persistentUrl}`);
         return { ...page, image_url: persistentUrl };
       }
-      throw new Error('Invalid output from Replicate');
+      throw new Error('No image generated from fal.ai/aura-flow');
     } catch (error) {
       console.error(`Error generating or saving image for page ${index + 1}:`, error);
       return page;
@@ -151,10 +172,10 @@ async function generateAndSaveImages(story: StoryPage[]): Promise<StoryPage[]> {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
-      const { childName, childAge, parentName, parentValue, favoriteAnimal } = req.body;
+      const { childName, childAge, storyTheme, parentValue } = req.body;
 
       console.log('Generating story content');
-      const storyData = await generateStoryContent(childName, childAge, parentName, parentValue, favoriteAnimal);
+      const storyData = await generateStoryContent(childName, childAge, storyTheme, parentValue);
 
       console.log('Generating and saving images');
       const storyWithImages = await generateAndSaveImages(storyData.story);

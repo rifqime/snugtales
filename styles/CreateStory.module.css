@@ -1,13 +1,14 @@
 .container {
-  max-width: 600px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
+  box-sizing: border-box;
 }
 
 .title {
   font-size: 24px;
-  color: #333;
+  color: #4D4B94;
   text-align: center;
   margin-bottom: 20px;
 }
@@ -33,8 +34,9 @@
   width: 100%;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ddd;
+  border: 1px solid #DDD;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .textarea {
@@ -43,7 +45,7 @@
 }
 
 .button {
-  background-color: #4CAF50;
+  background-color: #4EC0C0;
   color: white;
   padding: 12px;
   font-size: 18px;
@@ -54,11 +56,11 @@
 }
 
 .button:hover {
-  background-color: #45a049;
+  background-color: #78D7F2;
 }
 
 .error {
-  color: #ff0000;
+  color: #E74C3C;
   text-align: center;
   margin-bottom: 15px;
 }
@@ -83,16 +85,16 @@
   margin-top: 50px;
 }
 
-/* You can keep the other styles for story display if you want to reuse this CSS file */
 .storyContainer {
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .storyTitle {
   font-size: 24px;
-  color: #333;
+  color: #4D4B94;
   text-align: center;
   margin-bottom: 20px;
 }
@@ -100,7 +102,7 @@
 .storyPage {
   margin-bottom: 30px;
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #FFF;
   border-radius: 10px;
 }
 
@@ -120,14 +122,14 @@
 .parentInteraction {
   margin-top: 15px;
   padding: 10px;
-  background-color: #e6f7ff;
+  background-color: #E8F4FD;
   border-radius: 5px;
 }
 
 .storySummary {
   margin-top: 30px;
   padding: 20px;
-  background-color: #f0f0f0;
+  background-color: #F0F0F0;
   border-radius: 10px;
 }
 
@@ -136,10 +138,56 @@
   width: 200px;
   margin: 30px auto 0;
   padding: 10px;
-  background-color: #4CAF50;
+  background-color: #4EC0C0;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 16px;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 10px;
+  }
+
+  .title,
+  .storyTitle {
+    font-size: 20px;
+  }
+
+  .form {
+    gap: 10px;
+  }
+
+  .input,
+  .textarea,
+  .button,
+  .storyPage,
+  .parentInteraction,
+  .storySummary {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .button,
+  .newStoryButton {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .storyImage {
+    margin-bottom: 10px;
+  }
+
+  .storyText {
+    font-size: 14px;
+  }
+
+  .error,
+  .helperText,
+  .disclaimer,
+  .loading {
+    font-size: 12px;
+  }
 }

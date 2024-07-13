@@ -34,8 +34,18 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>SnugTales.com</h1>
-        <p className={styles.subtitle}>Strengthen Your Bond, One Bedtime Story at a Time</p>
+        <Image 
+          src="/SnugTales-400px.png" 
+          alt="SnugTales.com - Strengthen Your Bond, One Bedtime Story at a Time" 
+          width={400}
+          height={100}
+          style={{
+            width: 'auto',
+            height: 'auto',
+          }}
+        />
+        <h1 className={styles.hiddenText}>SnugTales.com</h1>
+        <p className={styles.hiddenText}>Strengthen Your Bond, One Bedtime Story at a Time</p>
       </header>
       <main className={styles.main}>
         <section className={styles.hero}>

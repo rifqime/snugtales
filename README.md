@@ -1,3 +1,6 @@
+
+![SnugTales](https://github.com/rifqime/snugtales/blob/main/public/SnugTales-1024.jpg)
+
 # SnugTales
 
 SnugTales is an AI-powered bedtime story generator designed for children aged 2-6. It creates engaging, educational stories that instill values chosen by parents while being entertaining and age-appropriate.
@@ -16,7 +19,7 @@ SnugTales is an AI-powered bedtime story generator designed for children aged 2-
 
 - Next.js
 - Anthropic's Claude AI for story generation
-- Replicate for image generation
+- FAL for image generation
 - Supabase for database and storage
 
 ## Getting Started
@@ -24,21 +27,21 @@ SnugTales is an AI-powered bedtime story generator designed for children aged 2-
 This is a proof of concept application. To run it locally:
 
 1. Clone the repository
-   ```
-   git clone https://github.com/yourusername/snugtales.git
+   ```bash
+   git clone https://github.com/rifqime/snugtales.git
    cd snugtales
    ```
 
 2. Install dependencies
-   ```
+   ```bash
    npm install
    ```
 
 3. Set up environment variables
    Create a `.env.local` file in the root directory and add your API keys:
-   ```
+   ```bash
    ANTHROPIC_API_KEY=your_anthropic_key_here
-   REPLICATE_API_TOKEN=your_replicate_key_here
+   FAL_KEY=your_fal_key_here
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
@@ -63,7 +66,7 @@ This is a proof of concept application. To run it locally:
    - Ensure your Supabase project's API settings allow requests from your application's domain (or set to `*` for development)
 
 5. Run the development server
-   ```
+   ```bash
    npm run dev
    ```
 
@@ -71,7 +74,7 @@ This is a proof of concept application. To run it locally:
 
 ## Usage
 
-1. Navigate to the homepage at http://localhost:3000
+1. Navigate to the homepage at [http://localhost:3000](http://localhost:3000)
 2. Click on "Start Your Story Journey"
 3. Fill in the required information about the child and the story theme
 4. Submit the form to generate a personalized bedtime story

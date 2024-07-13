@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from '../styles/Story.module.css';
 import { supabase } from '../lib/supabaseClient';
+import { RefreshCw, Home } from 'lucide-react';
 
 interface StoryPage {
   page_number: number;
@@ -27,6 +29,10 @@ export default function StoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState('');
+  const [revisionModalOpen, setRevisionModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number | null>(null);
+  const [userFeedback, setUserFeedback] = useState('');
+  const [revisingPage, setRevisingPage] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchStory(storyId: string) {
@@ -68,11 +74,59 @@ export default function StoryPage() {
     const url = window.location.href;
     navigator.clipboard.writeText(url).then(() => {
       setCopySuccess('URL copied!');
-      setTimeout(() => setCopySuccess(''), 2000); // Clear the message after 2 seconds
+      setTimeout(() => setCopySuccess(''), 2000);
     }, (err) => {
       console.error('Could not copy text: ', err);
       setCopySuccess('Failed to copy');
     });
+  };
+
+  const handleRevisionRequest = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    setRevisionModalOpen(true);
+  };
+
+  const handleRevisionSubmit = async () => {
+    if (!story || currentPage === null) return;
+
+    setRevisingPage(currentPage);
+    setRevisionModalOpen(false);
+
+    try {
+      const response = await fetch('/api/revise-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storyId: story.id,
+          pageNumber: currentPage,
+          originalPrompt: story.story[currentPage - 1].image_prompt,
+          userFeedback,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to revise image');
+      }
+
+      const { newImageUrl, refinedPrompt } = await response.json();
+
+      setStory(prevStory => {
+        if (!prevStory) return null;
+        const updatedStory = {...prevStory};
+        updatedStory.story = updatedStory.story.map(page => 
+          page.page_number === currentPage ? {...page, image_url: newImageUrl, image_prompt: refinedPrompt} : page
+        );
+        return updatedStory;
+      });
+    } catch (err) {
+      console.error('Error revising image:', err);
+      setError('Failed to revise image. Please try again.');
+    } finally {
+      setRevisingPage(null);
+      setUserFeedback('');
+    }
   };
 
   if (isLoading) {
@@ -99,6 +153,11 @@ export default function StoryPage() {
 
   return (
     <div className={styles.storyContainer}>
+      <Link href="/" className={styles.backHomeButton}>
+        <Home size={24} />
+        <span>Back to Home</span>
+      </Link>
+
       <h1 className={styles.storyTitle}>{story.title}</h1>
       <div className={styles.storySummary}>
         <div className={styles.summaryContent}>
@@ -118,12 +177,24 @@ export default function StoryPage() {
         <div key={index} className={styles.storyPage}>
           <h2 className={styles.pageNumber}>Page {page.page_number}</h2>
           {page.image_url && (
-            <div className={styles.imageContainer}>
-              <img 
-                src={page.image_url} 
-                alt={`Illustration for page ${page.page_number}`} 
-                className={styles.storyImage}
-              />
+            <div className={styles.imageWrapper}>
+              <div className={styles.imageContainer}>
+                <Image 
+                  src={page.image_url} 
+                  alt={`Illustration for page ${page.page_number}`} 
+                  layout="fill"
+                  objectFit="cover"
+                  className={styles.storyImage}
+                />
+                <button
+                  onClick={() => handleRevisionRequest(page.page_number)}
+                  disabled={revisingPage === page.page_number}
+                  className={styles.reviseButton}
+                  aria-label="Revise Image"
+                >
+                  <RefreshCw size={24} />
+                </button>
+              </div>
             </div>
           )}
           <p className={styles.storyText}>{page.story_text}</p>
@@ -144,6 +215,24 @@ export default function StoryPage() {
           Create Another Story
         </button>
       </div>
+
+      {revisionModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h2>Revise Image</h2>
+            <p>Describe what you&apos;d like to change about the image.</p>
+            <textarea
+              value={userFeedback}
+              onChange={(e) => setUserFeedback(e.target.value)}
+              className={styles.feedbackInput}
+            />
+            <div className={styles.modalButtons}>
+              <button onClick={() => setRevisionModalOpen(false)}>Cancel</button>
+              <button onClick={handleRevisionSubmit}>Submit</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
